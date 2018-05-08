@@ -10,14 +10,16 @@ namespace TransactionSystem
 
         
         
+        
         public bool HasPendingTransactions()
         {
-           throw new NotImplementedException();
+            // This should track if there is any pending transaction request (Deposit/Withdraw/ Transfer)
+            throw new NotImplementedException();
         }
 
         public void ProcessPendingTransactions()
         {
-            // The logic for processing pending transaction goes here
+            // The logic for processing pending transaction sequentially goes here
             // It should track which are already processed and which are pending transactions
             throw new NotImplementedException();
         }
