@@ -100,6 +100,35 @@ namespace TransactionSystemTests
             // Balance Check : FirstAccount -> 2000
             // Balance Check : SecondAccount -> 100
         }
+		
+		[TestMethod]
+        public void Test_Transfer_ThenWithdrawFromTheSecondAccount_ThenRollback()
+        {
+            // Create firstAccount with Initial Balance 2000
+            // Create secondAccount with Initial Balance 100
+
+            // Create a transfer request of 700 from firstAccount to secondAccount
+
+            // Run ProcessPendingTransactions() to process Pending TransactionRequests
+
+            // Balance Check : FirstAccount -> 1300
+            // Balance Check : SecondAccount -> 800
+			
+			// Create a withdraw request of 600 from the secondAccount
+			
+			// Run ProcessPendingTransactions() to process Pending TransactionRequests
+			
+			// Perform a Rollback with the transaction Id of the transfer which is made (Rollback should not be executed because of balance constraint)
+			
+			// Perform a Rollback with the transaction Id of the withdraw which was made
+			
+			// Run ProcessPendingTransactions() to process Pending TransactionRequests
+			
+			// Balance Check : FirstAccount -> 2000
+            // Balance Check : SecondAccount -> 100
+			
+			
+        }
 
     }
 }
