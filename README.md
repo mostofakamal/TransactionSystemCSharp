@@ -9,11 +9,11 @@ Consider a simple account where account contains information of **Account Owner 
 
 Design a System which supports all the above three operations where operations should be processed sequentially in the order they were added.
  Let us call these operations as Transaction request.
-You can use an ordered list or queue for this purpose to store
+You can use ordered list or queue for this purpose to store
  these transaction requests. You should be able to add new transaction requests to that List or queue. 
 Adding transaction requests to that list/queue will not execute the operation right away rather it would be executed once you call to **ProcessPendingTransactions()** (in class **TransactionManager** ) explicitly which will process the pending operation(transaction) in the list.
 Once an operation is processed that should be marked as completed and should
- not be processed in next call (Hint: you can maintain a flag for this purpose for simplicity).  
+ not be processed in next call of ProcessPendingTransactions (Hint: you can maintain a flag for this purpose for simplicity).  
 
 For example there can be transaction requests like below in the list in the below sequence:
 
@@ -22,12 +22,11 @@ For example there can be transaction requests like below in the list in the belo
 3. Transfer 10 from account Y to X
 
 If for any reason any transaction request cannot be executed for balance constraints (e.g. withdraw amount is greater than available balance) 
-then that transaction request should still be in the list as pending operation and in next run of **ProcessPendingTransactions()** if the balance constraint is met then it should be marked as executed. 
+then that transaction request should still be in the list as pending operation and in next run of **ProcessPendingTransactions()** if the balance constraint is met then it should be marked as completed. 
 
 **Taks:**
 
 - Complete the TransactionManager class.
-- You should be able to check balance of an account at any point of your program execution.
+- Complete the tests following the hints
 - Your design should have reusable code component (e.g should support adding new type of transaction with minimal changes) and follow OOP concepts
-- Add Unit Tests checking three of the above operations. Add cases for balance constraint operation.
-- Add functionality for Undoing a specific Transaction Request which has been executed already. 
+
