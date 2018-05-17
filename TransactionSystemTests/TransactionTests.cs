@@ -6,128 +6,107 @@ namespace TransactionSystemTests
     [TestClass]
     public class TransactionTests
     {
-        private TransactionManager _transactionManager = new TransactionManager();
+        private readonly TransactionManager _transactionManager = new TransactionManager();
 
         [TestMethod]
         public void DepositAccountCheckBalanceAndThenWithdraw_AllTransactionsSuccessful()
         {
-            // Create Account with Balance 0
-            // Add a deposit reqest of 100 to that account
-            // Pre-check : transactionManager Should have pending transactions at this point
-            // Account Balance Should be 0 at this point
+            Account sumonAccount = new Account("Sumon", 0);
+            Deposit deposit = new Deposit(sumonAccount, 100);
+            _transactionManager.AddTransaction(deposit);
 
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
+            Assert.IsTrue(_transactionManager.HasPendingTransactions);
+            Assert.AreEqual(0, sumonAccount.Balance);
 
-            // Check : there should not be any pending Transactions now
+            _transactionManager.ProcessPendingTransactions();
 
-            // Check balance of the account which should be 100 now
+            Assert.IsFalse(_transactionManager.HasPendingTransactions);
+            Assert.AreEqual(100, sumonAccount.Balance);
+            Withdraw withdrawal = new Withdraw(sumonAccount, 50);
+            _transactionManager.AddTransaction(withdrawal);
 
-            // Create a Withdraw of 50 on that account
+            _transactionManager.ProcessPendingTransactions();
 
-            // Perform a ProcessPendingTransactions() to process this
-
-            // check : No pending Transactions at this point
-            // Check balance: should be 100-50 =50
+            Assert.IsFalse(_transactionManager.HasPendingTransactions);
+            Assert.AreEqual(50, sumonAccount.Balance);
         }
 
         [TestMethod]
         public void Test_WithDrawRequestForAmountGreaterThanAvailableBalance_TransactionExecutedWhenBalanceConstrainMet()
         {
-            // Create account with 75 as initial Balance
-            // Add a withdraw request of 100 (exceeding the available balance)
-            // Check Balance: should be 75 
+            Account sumonAccount = new Account("Sumon", 75);
+            _transactionManager.AddTransaction(new Withdraw(sumonAccount, 100));
+            Assert.AreEqual(75, sumonAccount.Balance);
 
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
+            _transactionManager.AddTransaction(new Deposit(sumonAccount, 75));
 
-            // Add a deposit request to that account of 75
+            _transactionManager.ProcessPendingTransactions();
+            Assert.IsTrue(_transactionManager.HasPendingTransactions);
+            Assert.AreEqual(150, sumonAccount.Balance);
+            _transactionManager.ProcessPendingTransactions();
 
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
+            Assert.IsFalse(_transactionManager.HasPendingTransactions);
+            Assert.AreEqual(50, sumonAccount.Balance);
 
-            // check : there should be pending transactions at this point
-
-            // check Balance: should be 150
-
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
-
-            // Check: there should be no pending transactions at this point
-
-            // Balance Check : should be 50 (withdraw request of 100 should be successfull at this point)
-          
         }
 
         [TestMethod]
         public void Test_TransferRequestForAmountGreaterThanAvailableBalance_TransactionExecutedWhenBalanceConstrainMet()
         {
-            // Create firstAccount with Initial Balance 100
-            // Create secondAccount with Initial Balance 2000
 
-            // Create a transfer request of 700 from firstAccount to secondAccount
+            var firstAccount = new Account("First Account", 100);
+            var anotherAccount = new Account("Another Account", 2000);
 
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
+            var transferTransaction = new Transfer(firstAccount, anotherAccount, 700);
+            _transactionManager.AddTransaction(transferTransaction);
+            _transactionManager.ProcessPendingTransactions();
+            Assert.AreEqual(100, firstAccount.Balance);
+            Assert.AreEqual(2000, anotherAccount.Balance);
 
-            // Balance Check : FirstAccount -> 100
-            // Balance Check : SecondAccount -> 2000
+            var depositTRansaction = new Deposit(firstAccount, 900);
+            _transactionManager.AddTransaction(depositTRansaction);
 
-            // Add a Deposit request of 900 to FirstAccount
+            _transactionManager.ProcessPendingTransactions();
+            Assert.AreEqual(1000, firstAccount.Balance);
 
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
-
-            // Balance Check : FirstAccount: 1000
-
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
-
-            // Check: there should be no pending transactions at this point
-            // Balance Check : FirstAccount -> 300
-            // Balance Check : SecondAccount -> 2700
+            _transactionManager.ProcessPendingTransactions();
+            Assert.AreEqual(300, firstAccount.Balance);
+            Assert.AreEqual(2700, anotherAccount.Balance);
         }
+
+       
 
         [TestMethod]
         public void Test_Transfer_ThenRollback_AccountStatusRegainedItsInitialState()
         {
-            // Create firstAccount with Initial Balance 2000
-            // Create secondAccount with Initial Balance 100
+           
+            var firstAccount = new Account("First Account", 2000);
+            var anotherAccount = new Account("Another Account", 100);
 
-            // Create a transfer request of 700 from firstAccount to secondAccount
+            var transferTransaction = new Transfer(firstAccount, anotherAccount, 700);
+            _transactionManager.AddTransaction(transferTransaction);
 
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
+            _transactionManager.ProcessPendingTransactions();
 
-            // Balance Check : FirstAccount -> 1300
-            // Balance Check : SecondAccount -> 800
+            Assert.AreEqual(1300, firstAccount.Balance);
+            Assert.AreEqual(800, anotherAccount.Balance);
+            var withdrawTransaction = new Withdraw(anotherAccount, 600);
+            _transactionManager.AddTransaction(withdrawTransaction);
 
-            // Perform a Rollback with the transaction Id of the transfer which is made
+            _transactionManager.ProcessPendingTransactions();
+            Assert.AreEqual(1300, firstAccount.Balance);
+            Assert.AreEqual(200, anotherAccount.Balance);
 
-            // Check: there should be no pending transactions at this point
-            // Balance Check : FirstAccount -> 2000
-            // Balance Check : SecondAccount -> 100
-        }
-		
-        [TestMethod]
-        public void Test_Transfer_ThenWithdrawFromTheSecondAccount_ThenRollback()
-        {
-            // Create firstAccount with Initial Balance 2000
-            // Create secondAccount with Initial Balance 100
+            _transactionManager.RollbackTransaction(transferTransaction.TransactionId);
+            _transactionManager.ProcessPendingTransactions();
+            _transactionManager.RollbackTransaction(withdrawTransaction.TransactionId);
+            _transactionManager.ProcessPendingTransactions();
+            _transactionManager.ProcessPendingTransactions();
 
-            // Create a transfer request of 700 from firstAccount to secondAccount
+            Assert.AreEqual(2000, firstAccount.Balance);
+            Assert.AreEqual(100, anotherAccount.Balance);
 
-            // Run ProcessPendingTransactions() to process Pending TransactionRequests
 
-            // Balance Check : FirstAccount -> 1300
-            // Balance Check : SecondAccount -> 800
-			
-	    // Create a withdraw request of 600 from the secondAccount
-			
-	    // Run ProcessPendingTransactions() to process Pending TransactionRequests
-			
-	    // Perform a Rollback with the transaction Id of the transfer which is made (Rollback should not be executed because of balance constraint)
-			
-            // Perform a Rollback with the transaction Id of the withdraw which was made
-			
-	    // Run ProcessPendingTransactions() to process Pending TransactionRequests
-			
-	    // Balance Check : FirstAccount -> 2000
-            // Balance Check : SecondAccount -> 100
-			
-			
         }
 
     }

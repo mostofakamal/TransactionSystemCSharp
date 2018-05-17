@@ -1,33 +1,54 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace TransactionSystem
 {
     public class TransactionManager
     {
-        //TODO:  Maintain a List of Transactions (Deposit/Withdraw/ Transfer )
+        private readonly List<Transaction> _transactions = new List<Transaction>();
 
-        //TODO:  Add a Method for Adding Transaction
-
-        
-        
-        
-        public bool HasPendingTransactions()
+        public bool HasPendingTransactions
         {
-            // This should track if there is any pending transaction request (Deposit/Withdraw/ Transfer)
-            throw new NotImplementedException();
+            get { return _transactions.Any(x => !x.IsCompleted); }
+        }
+
+        public void AddTransaction(Transaction transaction)
+        {
+            _transactions.Add(transaction);
         }
 
         public void ProcessPendingTransactions()
         {
-            // The logic for processing pending transaction sequentially goes here
-            // It should track which are already processed and which are pending transactions
-            throw new NotImplementedException();
+            foreach (var transaction in _transactions.Where(x => !x.IsCompleted))
+            {
+                if (!transaction.PendingForRollback)
+                    transaction.Execute();
+                else
+                    transaction.RollBackTransaction();
+            }
         }
 
         public void RollbackTransaction(Guid transactionId)
         {
-            // The logic for rolling back a transaction with Id
-            throw new NotImplementedException();
+            var transaction = _transactions.FirstOrDefault(x => x.TransactionId == transactionId);
+
+            if (transaction == null)
+            {
+                throw new ArgumentException($"Transaction with Id {transactionId} does not exist!!");
+            }
+
+            if (!transaction.IsCompleted)
+            {
+                throw new InvalidOperationException("Can not rollback incomplete transaction");
+            }
+            if (!transaction.IsAbleToRollback)
+            {
+                throw new InvalidOperationException("Transaction is not able to be rollbacked");
+            }
+
+            transaction.IsCompleted = false;
+            transaction.PendingForRollback = true;
         }
     }
 }
